@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY ./package*.json /app/
 
-RUN npm install --only=prod
+RUN yarn install
 
 COPY . .
 
-CMD [ "npm", "start" ]
+CMD [ "yarn", "dev" ]

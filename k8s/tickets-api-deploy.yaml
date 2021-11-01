@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tickets-api-deploy
+  namespace: default
+  labels:
+    app: tickets-api-deploy
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: tickets-api
+      tier: api
+
+  template:
+    metadata:
+      name: tickets-api-pod
+      labels:
+        app: tickets-api
+        tier: api
+    spec:
+      containers:
+        - name: tickets-api-container
+          image: olavokruel/tickets-api
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 200m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 1280Mi
+          env:
+            - name: NATS_CLUSTER_ID
+              value: 'ecommerce'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: 'http://nat-stream-server-svc:4222'
+            - name: MONGO_URI
+              value: 'mongodb://tickets-mongo-db-svc:27017/tickets'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: jwt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-api-svc
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: tickets-api
+    tier: api
+  ports:
+    - name: tickets-api-ports
+      protocol: TCP
+      targetPort: 3000
+      port: 3000
