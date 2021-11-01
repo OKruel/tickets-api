@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  tickets-mongo-db-deploy
+  namespace: default
+  labels:
+    app:  tickets-mongodb-db-deploy
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: tickets-mongo-db
+      tier: database
+
+  template:
+    metadata:
+      name: tickets-mongo-db-pod
+      labels:
+        app: tickets-mongo-db
+        tier: database
+    spec:
+      containers:
+        - name:  tickets-mongo-db-container
+          image:  mongo
+          ports:
+            - containerPort:  27017
+          resources:
+      #       requests:
+      #         cpu: "0.25"
+      #         memory: '500Mi'
+      #       limits:
+      #         cpu: "0.25"
+      #         memory: '600Mi'
+      #     env:
+      #     - name: DB_HOST
+      #     volumeMounts:
+      #     - name: localtime
+      #       mountPath: /etc/localtime
+      # volumes:
+      #   - name: localtime
+      #     hostPath:
+      #       path: /usr/share/zoneinfo/Asia/Shanghai
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-mongo-db-svc
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: tickets-mongo-db
+    tier: database
+  ports:
+    - name: tickets-mongo-db-ports
+      protocol: TCP
+      targetPort: 27017
+      port: 27017
